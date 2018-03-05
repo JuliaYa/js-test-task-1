@@ -5,7 +5,7 @@ var REJECTED = 'rejected';
 
 function Promise(source){
   if(typeof source !== 'function'){
-    throw new TypeError('Argument is not a function');
+    throw new Error('Argument is not a function');
   }
   
   var self = this;
@@ -16,57 +16,65 @@ function Promise(source){
 
   var self = this;
 
-  this.finalize = function(value) {
-    this.state = FULFILLED;
+  function resolve(value) {
+    self.state = FULFILLED;
+    console.log(value);
+    console.log(self);
     self.onFinalized(value);
   };
 
-  this.reject = function(message){
-    this.state = REJECTED;
+  function reject(message){
+    self.state = REJECTED;
+    console.log(message);
     self.onRejected(message);
   };
 
-  this.doResolve = function(){
-    this.source(this.finalize, this.reject);
+  this.then = function(onFinalize, onReject){
+    self.onFinalized = onFinalize;
+    self.onRejected = onReject;
+    return self;
+  }
+
+  this.catch = function(onReject){
+    self.onRejected = onReject;
+    return self;
+  }
+
+  function doResolve(){
+    self.source(resolve, reject);
   };
 
-  this.doResolve();
+  setTimeout(function(){    // todo: make it work synchronously
+    doResolve();
+  }, 0);
   return this;
 };
 
-Promise.prototype.then = function(onFinalize){
-  this.onFinalized = onFinalize;
-  return this;
-}
-
-Promise.prototype.catch = function(onReject){
-  this.onRejected = onReject;
-  return this;
-}
-
+exports.Promise = Promise;
 //==== testing ==========================================================
 
-var key = false;
+// var key = false;
 
-function asyncFunction(resolve, reject) {
-  setTimeout(function() {
-    if(key){
-      resolve('some string');
-    }else{
-      reject('Sorry!');
-    }
-  }, 3000)
-}
+// function asyncFunction(resolve, reject) {
+//   setTimeout(function() {
+//     if(key){
+//       resolve('some string');
+//     }else{
+//       reject('Sorry!');
+//     }
+//   }, 0)
+// }
 
-function resolve1(value){
-  var newString = value.charAt(0).toUpperCase() + value.slice(1);
-  console.log(newString);
-};
+// function resolve1(value){
+//   var newString = value.charAt(0).toUpperCase() + value.slice(1);
+//   console.log(newString);
+// };
 
-function reject(message){
-  console.log(message);
-}
+// function reject(message){
+//   console.log(message);
+// }
 
-var res = new Promise(asyncFunction).then(resolve1).catch(reject);
+// var prom = new Promise(asyncFunction);
+// prom.then(resolve1).catch(reject);
 
-console.log(res);
+// console.log(prom);
